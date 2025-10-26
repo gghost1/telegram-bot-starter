@@ -6,6 +6,8 @@ import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessages
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText
+import org.telegram.telegrambots.meta.api.objects.CallbackQuery
+import org.telegram.telegrambots.meta.api.objects.Message
 import org.telegram.telegrambots.meta.api.objects.Update
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup
 import ru.gghost.telegram.storage.Storage
@@ -32,6 +34,15 @@ class Context(
         return update
     }
 
+    fun getMessage(): Message {
+        return update.message
+    }
+
+    fun getCallbackQuery(): CallbackQuery {
+        val callbackQuery = update.callbackQuery ?: throw NotFoundException()
+        return callbackQuery
+    }
+
     fun sendMessage(): SendMessage.SendMessageBuilder {
         return SendMessage
             .builder()
@@ -39,14 +50,6 @@ class Context(
     }
 
     fun sendMessage(message: SendMessage.SendMessageBuilder, buttons: InlineKeyboardMarkup? = null): Int {
-        try {
-            defaultAbsSender.execute(
-                DeleteMessages.builder()
-                    .chatId(userId)
-                    .messageIds(userStorage.messagesStorage.getAll(userId))
-                    .build()
-            )
-        } catch (_: RuntimeException) {}
         val builtMessage = if (buttons == null) {
             message.build()
         } else {
@@ -65,11 +68,22 @@ class Context(
                 editMessage = editMessage
                     .replyMarkup(buttons)
             }
-            defaultAbsSender.execute(editMessage.build())
+            try {
+                defaultAbsSender.execute(editMessage.build())
+            } catch (_: RuntimeException) {}
+
         } else {
             id = defaultAbsSender.execute(builtMessage).messageId
             userStorage.messagesStorage.saveFirst(userId, id)
         }
+        try {
+            defaultAbsSender.execute(
+                DeleteMessages.builder()
+                    .chatId(userId)
+                    .messageIds(userStorage.messagesStorage.getAll(userId))
+                    .build()
+            )
+        } catch (_: RuntimeException) {}
         return id!!
     }
 

@@ -8,6 +8,7 @@ import org.telegram.telegrambots.bots.DefaultAbsSender
 import org.telegram.telegrambots.meta.api.objects.Update
 import ru.gghost.telegram.command.Context
 import ru.gghost.telegram.command.ErrorCommand
+import ru.gghost.telegram.command.NotFoundException
 import ru.gghost.telegram.exception.UserIdNotFoundException
 import ru.gghost.telegram.storage.Storage
 import ru.gghost.telegram.storage.exception.UserNotFoundException
@@ -50,6 +51,7 @@ class StateService(
             try {
                 val command = stateTree.getCommand(state)
                 command!!.processMessageUpdate(context)
+            } catch (_: NotFoundException) {
             } catch (ex: RuntimeException) {
                 log.error(ex) { "Error processing update for user $id\n$update" }
                 errorCommand.processMessageUpdate(context)

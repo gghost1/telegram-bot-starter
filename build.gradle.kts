@@ -7,7 +7,7 @@ plugins {
 
 allprojects {
     group = "ru.gghost.telegram"
-    version = "0.2.2"
+    version = "0.2.6"
 
     repositories {
         mavenCentral()
